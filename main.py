@@ -59,8 +59,8 @@ def processar_definitivo():
         rowid, url, filename = row
         
         # --- FILTRO DE HTML (PULA OS < 100 ARQUIVOS) ---
-        if filename.lower().endswith('.html'):
-            print(f"⏩ Pulando HTML: {filename}")
+        if filename.lower().endswith('.html') or filename.lower().endswith('.htm') or filename.lower().endswith('aprt20164000_1.pdf'):
+            print(f"⏩ Pulando HTM/L: {filename}")
             cursor.execute("UPDATE arquivos SET status = 4 WHERE rowid = ?", (rowid,))
             conn.commit()
             continue
@@ -70,6 +70,13 @@ def processar_definitivo():
 
         try:
             driver.get(url)
+            
+            # --- FILTRO 404 (Link quebrado no servidor) ---
+            if "404.0 - Not Found" in driver.page_source or "404 - Not Found" in driver.page_source:
+                print(f"⚠️ Erro 404: Arquivo não existe no servidor, pulando...")
+                cursor.execute("UPDATE arquivos SET status = 4, erro_log = 'Erro 404' WHERE rowid = ?", (rowid,))
+                conn.commit()
+                continue
             
             file_path = None
             sucesso_download = False
