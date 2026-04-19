@@ -21,9 +21,12 @@ def conferir_status():
     cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 1")
     processando = cursor.fetchone()[0]
 
+    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 4")
+    invalidos = cursor.fetchone()[0]
+
     conn.close()
 
-    return total, pendentes, erros, concluidos, processando
+    return total, pendentes, erros, concluidos, processando,invalidos
 
 
 def limpar_tela():
@@ -32,7 +35,7 @@ def limpar_tela():
 
 def monitorar():
     while True:
-        total, pendentes, erros, concluidos, processando = conferir_status()
+        total, pendentes, erros, concluidos, processando,invalidos = conferir_status()
 
         limpar_tela()
 
@@ -40,8 +43,9 @@ def monitorar():
         print("📊 RESUMO DO BANCO DE DADOS")
         print("-" * 30)
         print(f"✅ Concluídos:   {concluidos}")
-        print(f"⏳ Pendentes:     {pendentes}")
+        print(f"⏳ Pendentes:    {pendentes}")
         print(f"❌ Erros:         {erros}")
+        print(f"❓ Invalidos:     {invalidos}")
         print(f"🔄 Processando:   {processando}")
         print("-" * 30)
         print(f"📦 Total Geral:   {total}")
