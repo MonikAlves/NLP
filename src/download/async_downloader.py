@@ -8,7 +8,7 @@ from curl_cffi.requests import AsyncSession
 from loguru import logger
 from typing import Optional, Tuple
 from google.cloud import storage
-
+"""
 # --- 1. CONFIGURAÇÕES ---
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "chave.json"
 DB_NAME = "controle_downloads.db"
@@ -157,3 +157,4 @@ if __name__ == "__main__":
         print("\n🛑 Processamento finalizado.")
     except KeyboardInterrupt:
         print("\n🛑 Parada manual.")
+"""
