@@ -6,59 +6,73 @@ def conferir_status():
     conn = sqlite3.connect('controle_downloads.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM arquivos")
-    total = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 0")
-    pendentes = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 2")
-    erros = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 3")
-    concluidos = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 1")
-    processando = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM arquivos WHERE status = 4")
-    invalidos = cursor.fetchone()[0]
-
+    query = """
+    SELECT 
+        IFNULL(ano, 'Sem Ano') as ano_ref,
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as pendentes,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as processando,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as erros,
+        SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as concluidos,
+        SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as invalidos
+    FROM arquivos
+    GROUP BY ano_ref
+    ORDER BY ano_ref DESC
+    """
+    
+    try:
+        cursor.execute(query)
+        resumo = cursor.fetchall()
+    except sqlite3.OperationalError:
+        resumo = []
+    
     conn.close()
-
-    return total, pendentes, erros, concluidos, processando,invalidos
-
+    return resumo
 
 def limpar_tela():
-    os.system('clear')  # Linux (sua VM)
-
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def monitorar():
     while True:
-        total, pendentes, erros, concluidos, processando,invalidos = conferir_status()
-
+        resumo = conferir_status()
         limpar_tela()
 
-        print("-" * 30)
-        print("📊 RESUMO DO BANCO DE DADOS")
-        print("-" * 30)
-        print(f"✅ Concluídos:   {concluidos}")
-        print(f"⏳ Pendentes:    {pendentes}")
-        print(f"❌ Erros:         {erros}")
-        print(f"❓ Invalidos:     {invalidos}")
-        print(f"🔄 Processando:   {processando}")
-        print("-" * 30)
-        print(f"📦 Total Geral:   {total}")
+        # --- CÁLCULOS TOTAIS ---
+        total_v = sum(row[1] for row in resumo)
+        concluidos_v = sum(row[5] for row in resumo)
 
-        if total > 0:
-            progresso = (concluidos / total) * 100
-            print(f"📈 Progresso:     {progresso:.2f}%")
+        print("-" * 40)
+        print("🌍 RESUMO TOTAL (TODOS OS ANOS)")
+        print("-" * 40)
+        print(f"📦 Total Geral:   {total_v}")
+        print(f"✅ Concluídos:    {concluidos_v}")
+        if total_v > 0:
+            prog_g = (concluidos_v / total_v) * 100
+            print(f"📈 Progresso:     {prog_g:.2f}%")
+        print("-" * 40)
 
-        print("-" * 30)
-        print("🔄 Atualizando em 5 segundos...")
+        # --- DETALHAMENTO POR ANO ---
+        for ano_data in resumo:
+            ano, total, pend, proc, err, ok, inv = ano_data
+            
+            # Cálculo de porcentagem do ano específico
+            prog_ano = (ok / total * 100) if total > 0 else 0
+            
+            print(f"\n📅 ANO: {ano}")
+            print(f"📈 Progresso:     {prog_ano:.2f}%")
+            print(f"✅ Concluídos:     {ok}")
+            print(f"⏳ Pendentes:      {pend}")
+            print(f"❌ Erros:          {err}")
+            print(f"❓ Inválidos:      {inv}")
+            print(f"🔄 Processando:    {proc}")
+            print(f"小 Total Ano:      {total}")
+            print("." * 20)
 
-        time.sleep(5)
-
+        print(f"\n🔄 Atualizando em 1 segundos...")
+        time.sleep(1)
 
 if __name__ == "__main__":
-    monitorar()
+    try:
+        monitorar()
+    except KeyboardInterrupt:
+        print("\n👋 Monitoramento encerrado.")

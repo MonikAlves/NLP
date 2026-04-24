@@ -1,6 +1,13 @@
 import json
 import sqlite3
 
+def limpar_campo(valor):
+    if not valor:
+        return None
+    if ':' in valor:
+        return valor.split(':', 1)[1].strip()
+    return valor.strip()
+
 def migrar():
     # 1. Carregar o arquivo JSON
     with open('dado.json', 'r', encoding='utf-8') as f:
@@ -21,7 +28,17 @@ def migrar():
             nome_arquivo TEXT,
             status INTEGER DEFAULT 0,
             tentativas INTEGER DEFAULT 0,
-            erro_log TEXT
+            erro_log TEXT,
+            ano INTEGER,
+            numeracao_item TEXT,
+            autor TEXT,
+            material TEXT,
+            esfera TEXT,
+            situacao TEXT,
+            assinatura TEXT,
+            publicacao TEXT,
+            assunto TEXT,
+            ementa TEXT
         )
     ''')
 
@@ -32,16 +49,31 @@ def migrar():
         for registro in conteudo.get('registros', []):
             for pdf in registro.get('pdfs', []):
                 try:
-                    cursor.execute('''INSERT OR IGNORE INTO arquivos 
-                        (data_registro, titulo, url, nome_arquivo, status)
-                        VALUES (?, ?, ?, ?, ?)
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO arquivos (
+                            data_registro, titulo, url, nome_arquivo, status,
+                            ano, numeracao_item, autor, material, esfera,
+                            situacao, assinatura, publicacao, assunto, ementa
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         data,
                         registro.get('titulo'),
                         pdf.get('url'),
                         pdf.get('arquivo'),
-                        0 # status inicial
+                        0,
+                        int(data[:4]),
+                        registro.get('numeracaoItem'),
+                        registro.get('autor'),
+                        registro.get('material'),
+                        limpar_campo(registro.get('esfera')),
+                        limpar_campo(registro.get('situacao')),
+                        limpar_campo(registro.get('assinatura')),
+                        limpar_campo(registro.get('publicacao')),
+                        limpar_campo(registro.get('assunto')),
+                        registro.get('ementa')
                     ))
+
                     if cursor.rowcount > 0:
                         registros_inseridos += 1
                 except Exception as e:
