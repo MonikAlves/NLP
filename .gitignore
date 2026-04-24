@@ -1,1 +1,4 @@
 *.db
+*.json
+/venv
+/temp_pdfs
