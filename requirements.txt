@@ -2,3 +2,5 @@ protobuf==7.34.1
 selenium==4.43.0
 webdriver_manager==4.0.2
 google-cloud-storage
+curl_cffi==0.15.0
+loguru==0.7.3
