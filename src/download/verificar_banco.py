@@ -2,8 +2,10 @@ import sqlite3
 import time
 import os
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
 def conferir_status():
-    conn = sqlite3.connect('controle_downloads.db')
+    conn = sqlite3.connect(os.path.join(ROOT_DIR, 'controle_downloads.db'))
     cursor = conn.cursor()
 
     query = """

@@ -9,10 +9,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from google.cloud import storage
 
 # --- 1. CONFIGURAÇÕES ---
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "chave.json"
-DB_NAME = "controle_downloads.db"
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "chave.json")
+DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
 BUCKET_NAME = "dados_bruto_nlp"
-DOWNLOAD_DIR = os.path.join(os.getcwd(), "temp_pdfs")
+DOWNLOAD_DIR = os.path.join(ROOT_DIR, "temp_pdfs")
 
 if not os.path.exists(DOWNLOAD_DIR):
     os.makedirs(DOWNLOAD_DIR)

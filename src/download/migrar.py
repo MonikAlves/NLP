@@ -1,5 +1,8 @@
 import json
 import sqlite3
+import os
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 def limpar_campo(valor):
     if not valor:
@@ -10,11 +13,11 @@ def limpar_campo(valor):
 
 def migrar():
     # 1. Carregar o arquivo JSON
-    with open('dado.json', 'r', encoding='utf-8') as f:
+    with open(os.path.join(ROOT_DIR, 'dado.json'), 'r', encoding='utf-8') as f:
         dados = json.load(f)
 
     # 2. Conectar ao SQLite (vai criar o arquivo se não existir)
-    conn = sqlite3.connect('controle_downloads.db')
+    conn = sqlite3.connect(os.path.join(ROOT_DIR, 'controle_downloads.db'))
     cursor = conn.cursor()
 
     # 3. Criar a tabela com a estrutura otimizada
