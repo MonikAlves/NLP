@@ -98,14 +98,6 @@ async def worker_loop(worker_id: int):
             rowid, url, filename = task
             cursor = conn.cursor()
 
-            # --- NOVO FILTRO DE EXTENSÃO ---
-            # Removido o pulo de HTML. Agora ele só pula o arquivo específico que você pediu.
-            if filename.lower().endswith('aprt20164000_1.pdf'):
-                logger.info(f"⏩ Worker {worker_id}: Pulando arquivo bloqueado {filename}")
-                cursor.execute("UPDATE arquivos SET status = 4 WHERE rowid = ?", (rowid,))
-                conn.commit()
-                continue
-
             # Determina o Content-Type para o Google Cloud Storage
             if filename.lower().endswith(('.html', '.htm')):
                 c_type = "text/html"
