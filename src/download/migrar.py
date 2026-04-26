@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import os
+import sys
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -12,8 +13,10 @@ def limpar_campo(valor):
     return valor.strip()
 
 def migrar():
-    # 1. Carregar o arquivo JSON
-    with open(os.path.join(ROOT_DIR, 'dado.json'), 'r', encoding='utf-8') as f:
+    # 1. Carregar o arquivo JSON (aceita caminho via argumento ou usa dado.json)
+    json_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT_DIR, 'dado.json')
+    print(f"📂 Lendo {json_path}...")
+    with open(json_path, 'r', encoding='utf-8') as f:
         dados = json.load(f)
 
     # 2. Conectar ao SQLite (vai criar o arquivo se não existir)
@@ -56,7 +59,7 @@ def migrar():
                         INSERT OR IGNORE INTO arquivos (
                             data_registro, titulo, url, nome_arquivo, status,
                             ano, numeracao_item, autor, material, esfera,
-                            situacao, assinatura, publicacao, assunto, ementa
+                            situacao, data_assinatura, data_publicacao, assunto, ementa
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
