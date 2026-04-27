@@ -111,6 +111,7 @@ def process_single_file(arquivo) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Pipeline de Chunking Resiliente (1-para-1) com SQLite e Retries")
     parser.add_argument("--limit", type=int, default=None, help="Limita o número de arquivos processados para testes.")
+    parser.add_argument("--workers", type=int, default=50, help="Número de threads simultâneas.")
     args = parser.parse_args()
 
     logger.info("Iniciando pipeline de Chunking...")
@@ -136,7 +137,7 @@ def main():
     erros = 0
     total = len(arquivos_pendentes)
     
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
         future_to_arq = {executor.submit(process_single_file, arq): arq for arq in arquivos_pendentes}
         
         for idx, future in enumerate(as_completed(future_to_arq), 1):
