@@ -64,17 +64,29 @@ def completion(pergunta: str, debug: bool = False) -> Dict[str, Any]:
     # 3. Montar o prompt usando o template do cabeçalho
     prompt = PROMPT_TEMPLATE.format(context_text=context_text, pergunta=pergunta)
 
-    # 4. Chamar a LLM via OpenRouter usando o modelo do .env
-    response = client.chat.completions.create(
-        model=os.getenv("MODEL"),
-        messages=[
-            {"role": "system", "content": "Você é um assistente útil e preciso."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0
-    )
+    # 4. Chamar a LLM com até 3 tentativas (retry)
+    max_retries = 3
+    resposta_final = ""
     
-    resposta_final = response.choices[0].message.content
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=os.getenv("MODEL"),
+                messages=[
+                    {"role": "system", "content": "Você é um assistente útil e preciso."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0
+            )
+            resposta_final = response.choices[0].message.content
+            break  # Sucesso! Sai do loop
+        except Exception as e:
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(2)  # Espera 2 segundos antes de tentar de novo
+                continue
+            else:
+                resposta_final = f"Erro após {max_retries} tentativas: O modelo está indisponível no momento. Detalhe: {str(e)}"
 
     # 5. Se debug for False, retorna apenas a resposta
     if not debug:
