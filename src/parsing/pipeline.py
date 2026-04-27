@@ -7,32 +7,24 @@ from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
 from google.cloud import storage
 
-# Caminhos absolutos — funciona independente de onde o script for rodado
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "chave.json")
 DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
 BUCKET_NAME = "dados_bruto_nlp"
 MAX_WORKERS = 16
 
-# Importa módulos do mesmo pacote
 sys.path.insert(0, os.path.dirname(__file__))
 from extractor import extract_pages
 from enricher import enrich_page
 from chunker import chunk_pages
 
-# Status usados na tabela arquivos
-STATUS_BAIXADO = 3       # já no GCP, pronto para parsing
-STATUS_PARSEANDO = 5     # worker reservou o arquivo
-STATUS_PARSEADO = 6      # parsing concluído com sucesso
-STATUS_ERRO_PARSE = 7    # erro durante parsing
+STATUS_BAIXADO = 3
+STATUS_PARSEANDO = 5
+STATUS_PARSEADO = 6
+STATUS_ERRO_PARSE = 7
 
-# Filtro de ano (opcional): ex. python pipeline.py 2021
 ANO_FILTRO = int(sys.argv[1]) if len(sys.argv) > 1 else None
 
-
-# ---------------------------------------------------------------------------
-# Controle de fila (mesmo padrão do async_downloader)
-# ---------------------------------------------------------------------------
 
 def get_next_task(conn, ano_filtro=None) -> tuple | None:
     """
@@ -76,10 +68,6 @@ def get_next_task(conn, ano_filtro=None) -> tuple | None:
                 raise
 
 
-# ---------------------------------------------------------------------------
-# Persistência
-# ---------------------------------------------------------------------------
-
 def save_chunks(conn, arquivo_id: int, chunks: list[dict]):
     """Insere todos os chunks de um arquivo no banco."""
     rows = []
@@ -90,7 +78,7 @@ def save_chunks(conn, arquivo_id: int, chunks: list[dict]):
             c.get("pagina"),
             c.get("chunk_index"),
             c.get("texto"),
-            c.get("metodo"),           # método de extração (pymupdf/ocr/ocr_falhou)
+            c.get("metodo"),
             c.get("titulo"),
             c.get("ementa"),
             c.get("assunto"),
@@ -117,10 +105,6 @@ def save_chunks(conn, arquivo_id: int, chunks: list[dict]):
     """, rows)
     conn.commit()
 
-
-# ---------------------------------------------------------------------------
-# Worker
-# ---------------------------------------------------------------------------
 
 def worker_loop(worker_id: int, ano_filtro=None):
     """Loop principal de cada processo paralelo."""
@@ -154,7 +138,6 @@ def worker_loop(worker_id: int, ano_filtro=None):
 
             logger.info(f"📄 Worker {worker_id}: {nome_arquivo}")
 
-            # 1. Baixa o PDF do GCP em memória (nunca salva em disco)
             try:
                 blob = bucket.blob(f"aneel/pdfs/{nome_arquivo}")
                 pdf_bytes = blob.download_as_bytes()
@@ -167,7 +150,6 @@ def worker_loop(worker_id: int, ano_filtro=None):
                 conn.commit()
                 continue
 
-            # 2. Extrai páginas (PyMuPDF → OCR fallback)
             try:
                 pages = extract_pages(pdf_bytes, nome_arquivo)
                 if not pages:
@@ -181,13 +163,9 @@ def worker_loop(worker_id: int, ano_filtro=None):
                 conn.commit()
                 continue
 
-            # 3. Enriquece cada página (metadados do banco + Regex)
             enriched = [enrich_page(p, doc_metadata) for p in pages]
-
-            # 4. Gera chunks
             chunks = chunk_pages(enriched)
 
-            # 5. Salva no banco
             try:
                 save_chunks(conn, arquivo_id, chunks)
                 conn.execute(
@@ -216,10 +194,6 @@ def run_worker(args):
     worker_id, ano_filtro = args
     worker_loop(worker_id, ano_filtro)
 
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     filtro_msg = f"ano={ANO_FILTRO}" if ANO_FILTRO else "todos os anos"

@@ -1,4 +1,7 @@
+src/*/__pycache__/
 *.db
 *.json
 /venv
+/.venv
 /temp_pdfs
+.env

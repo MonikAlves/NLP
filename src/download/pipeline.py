@@ -4,12 +4,13 @@ import os
 import random
 import time
 from concurrent.futures import ProcessPoolExecutor
-from curl_cffi.requests import AsyncSession
 from loguru import logger
 from typing import Optional, Tuple
 from google.cloud import storage
 
-# --- 1. CONFIGURAÇÕES ---
+from migrar import migrar
+from downloader import Downloader
+
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "chave.json")
 DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
@@ -17,54 +18,6 @@ BUCKET_NAME = "dados_bruto_nlp"
 MAX_WORKERS = 15
 
 
-# --- 2. CLASSE DE DOWNLOAD ---
-class AsyncPDFDownloader:
-    def __init__(self):
-        self._session: Optional[AsyncSession] = None
-        self._lock = asyncio.Lock()
-
-    async def get_session(self) -> AsyncSession:
-        current_loop = asyncio.get_running_loop()
-        async with self._lock:
-            if self._session is None or self._session.loop != current_loop:
-                if self._session:
-                    try: await self._session.close()
-                    except: pass
-                self._session = AsyncSession(impersonate="chrome120", verify=False)
-            return self._session
-
-    async def close(self):
-        async with self._lock:
-            if self._session:
-                await self._session.close()
-                self._session = None
-
-    async def download_file(self, url: str) -> Tuple[str, Optional[bytes], Optional[str]]:
-        # Limpeza de URL (Removendo espaços e garantindo https)
-        url = url.strip().replace("http://", "https://")
-        
-        await asyncio.sleep(random.uniform(0.3, 1.0))
-
-        for attempt in range(3):
-            try:
-                session = await self.get_session()
-                # Aumentei o timeout para 60 para aguentar HTMLs maiores ou ZIPs
-                resp = await session.get(url, timeout=60, allow_redirects=True)
-                
-                if resp.status_code == 200:
-                    return url, resp.content, None
-                
-                if resp.status_code == 404:
-                    return url, None, "Erro 404"
-                
-                await asyncio.sleep(2 ** (attempt + 1))
-            except Exception as e:
-                logger.error(f"Erro inesperado {url}: {e}")
-                await asyncio.sleep(2)
-
-        return url, None, "Falha definitiva"
-
-# --- 3. FUNÇÕES DO WORKER ---
 def get_next_task(conn) -> Optional[Tuple]:
     cursor = conn.cursor()
     while True:
@@ -88,7 +41,7 @@ async def worker_loop(worker_id: int):
     conn = sqlite3.connect(DB_NAME, timeout=60.0)
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
-    downloader = AsyncPDFDownloader()
+    downloader = Downloader()
 
     try:
         while True:
@@ -98,7 +51,6 @@ async def worker_loop(worker_id: int):
             rowid, url, filename = task
             cursor = conn.cursor()
 
-            # Determina o Content-Type para o Google Cloud Storage
             if filename.lower().endswith(('.html', '.htm')):
                 c_type = "text/html"
                 folder = "aneel/htmls"
@@ -111,15 +63,12 @@ async def worker_loop(worker_id: int):
 
             logger.info(f"📥 Worker {worker_id}: Baixando {filename}...")
             
-            # --- DOWNLOAD ---
             _, content, erro_log = await downloader.download_file(url)
 
-            # --- UPLOAD ---
             if content:
                 try:
                     blob_name = f"{folder}/{filename}"
                     blob = bucket.blob(blob_name)
-                    # Upload usando o content_type correto definido acima
                     blob.upload_from_string(content, content_type=c_type)
                     
                     cursor.execute("UPDATE arquivos SET status = 3, erro_log = NULL WHERE rowid = ?", (rowid,))
@@ -142,6 +91,10 @@ def run_worker(worker_id: int):
     asyncio.run(worker_loop(worker_id))
 
 if __name__ == "__main__":
+    migrar("src/download/resource/2016.json")
+    migrar("src/download/resource/2021.json")
+    migrar("src/download/resource/2022.json")
+
     print("🚀 Iniciando Motor (PDF + HTML + ZIP) Multi-Processos...")
     try:
         with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:

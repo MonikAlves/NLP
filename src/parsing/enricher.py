@@ -1,7 +1,6 @@
 import re
 import json
 
-# Padrões Regex para documentos da ANEEL
 PATTERNS = {
     "artigos": re.compile(
         r'\bArt\.?\s*\d+[º°]?(?:\s*[-–]\s*[A-Z])?', re.IGNORECASE
@@ -33,12 +32,10 @@ def enrich_page(page: dict, doc_metadata: dict) -> dict:
     """
     texto = page.get("texto", "")
 
-    # Metadados do banco entram diretamente no dict da página
     enriched = {**page, **doc_metadata}
 
-    # Regex aplicados ao texto da página
     for campo, pattern in PATTERNS.items():
-        matches = list(dict.fromkeys(pattern.findall(texto)))  # dedup com ordem
+        matches = list(dict.fromkeys(pattern.findall(texto)))
         enriched[campo] = json.dumps(matches, ensure_ascii=False) if matches else None
 
     return enriched
