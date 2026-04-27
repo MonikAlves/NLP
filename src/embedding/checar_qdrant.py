@@ -3,7 +3,6 @@ from qdrant_client import QdrantClient
 from dotenv import load_dotenv
 from loguru import logger
 
-# Carrega variáveis do .env
 load_dotenv()
 
 def checar_qdrant():
@@ -15,12 +14,10 @@ def checar_qdrant():
     collection_name = "aneel_chunks"
 
     try:
-        # 1. Informações gerais da coleção
         info = client.get_collection(collection_name=collection_name)
         logger.info(f"📊 Coleção: {collection_name}")
         logger.info(f"🔢 Total de pontos (chunks) no banco: {info.points_count}")
 
-        # 2. Listar alguns pontos para ver o payload
         logger.info("🔍 Inspecionando os últimos registros inseridos...")
         records, _ = client.scroll(
             collection_name=collection_name,

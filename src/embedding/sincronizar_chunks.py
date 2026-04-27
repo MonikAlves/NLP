@@ -13,11 +13,9 @@ def sincronizar_chunks():
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
 
-    # Coleta todos os nomes base que possuem JSONL no GCP
     arquivos_no_gcp = set()
     for blob in bucket.list_blobs(prefix="aneel/chunks/"):
         if blob.name.endswith(".jsonl"):
-            # Converte de volta para o nome esperado no banco (.pdf)
             nome = blob.name.split("/")[-1].replace(".jsonl", ".pdf")
             arquivos_no_gcp.add(nome)
 
@@ -27,11 +25,9 @@ def sincronizar_chunks():
         logger.warning("Nenhum chunk encontrado.")
         return
 
-    # Atualiza o banco
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    # Prepara a query em lote
     nomes_placeholders = ",".join(["?"] * len(arquivos_no_gcp))
     query = f"""
         UPDATE arquivos 
