@@ -68,7 +68,7 @@ class Retriever:
                 "year": hit.payload.get("ano")
             })
 
-        return results
+        return results, query_vector
 
 # Função de conveniência para o Back-end
 def retrieve_context(query: str, limit: int = 5, year: str = None):
@@ -82,7 +82,7 @@ def retrieve_context(query: str, limit: int = 5, year: str = None):
 if __name__ == "__main__":
     # Teste rápido
     pergunta = "Quais documentos subsidiam a revisão tarifária?"
-    contextos = retrieve_context(pergunta, limit=2)
+    contextos, query_vector = retrieve_context(pergunta, limit=2)
     
     for c in contextos:
         print(f"\n[{c['file']}] (Score: {c['score']:.4f})\n{c['chunk'][:200]}...")
