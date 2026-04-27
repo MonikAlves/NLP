@@ -2,6 +2,7 @@ import os
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.models import PointStruct
+from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -14,6 +15,7 @@ class VectorDB:
         self.client = QdrantClient(
             url=os.getenv("QDRANT_URL"),
             api_key=os.getenv("QDRANT_API_KEY"),
+            timeout=60, # Aumentado para 60 segundos
         )
 
     def ensure_collection(self, vector_size=1536):
@@ -36,6 +38,11 @@ class VectorDB:
         else:
             logger.info(f"📚 Coleção '{self.collection_name}' já existe.")
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=20),
+        reraise=True
+    )
     def upsert_chunks(self, points: list[PointStruct]):
         """
         Insere ou atualiza um lote de vetores e metadados no Qdrant.
