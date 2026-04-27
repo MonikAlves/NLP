@@ -3,3 +3,4 @@
 /venv
 /.venv
 /temp_pdfs
+.env
