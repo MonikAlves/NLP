@@ -9,8 +9,8 @@ root_path = str(Path(__file__).parent.parent.parent)
 if root_path not in sys.path:
     sys.path.append(root_path)
 
-from retrieval.retriever import retrieve_context
-from embedding.embedder import Embedder
+# Agora importa tudo do novo arquivo unificado dentro da pasta do backend
+from retrieval.retriever import retrieve_context, Embedder
 from dotenv import load_dotenv
 
 # Carrega variáveis do arquivo '.env' na raiz
