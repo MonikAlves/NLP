@@ -39,7 +39,6 @@ def monitorar():
         resumo = conferir_status()
         limpar_tela()
 
-        # --- CÁLCULOS TOTAIS ---
         total_v = sum(row[1] for row in resumo)
         concluidos_v = sum(row[5] for row in resumo)
 
@@ -53,11 +52,9 @@ def monitorar():
             print(f"📈 Progresso:     {prog_g:.2f}%")
         print("-" * 40)
 
-        # --- DETALHAMENTO POR ANO ---
         for ano_data in resumo:
             ano, total, pend, proc, err, ok, inv = ano_data
             
-            # Cálculo de porcentagem do ano específico
             prog_ano = (ok / total * 100) if total > 0 else 0
             
             print(f"\n📅 ANO: {ano}")
