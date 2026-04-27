@@ -45,7 +45,7 @@ def export_worker(arquivo):
         
         # Troca a extensão para .md
         base_name = nome_arquivo.rsplit('.', 1)[0]
-        blob_path = f"aneel/markdowns/{ano}/{base_name}.md"
+        blob_path = f"aneel/markdowns_corrigidos/{ano}/{base_name}.md"
         
         blob = bucket.blob(blob_path)
         blob.upload_from_string(full_markdown, content_type="text/markdown")
