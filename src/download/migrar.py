@@ -12,9 +12,9 @@ def limpar_campo(valor):
         return valor.split(':', 1)[1].strip()
     return valor.strip()
 
-def migrar():
+def migrar(json_file):
     # 1. Carregar o arquivo JSON (aceita caminho via argumento ou usa dado.json)
-    json_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT_DIR, 'dado.json')
+    json_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT_DIR, json_file)
     print(f"📂 Lendo {json_path}...")
     with open(json_path, 'r', encoding='utf-8') as f:
         dados = json.load(f)
@@ -88,6 +88,3 @@ def migrar():
     conn.commit()
     conn.close()
     print(f"Migração concluída! {registros_inseridos} novos arquivos prontos para processamento.")
-
-if __name__ == "__main__":
-    migrar()
