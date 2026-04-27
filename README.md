@@ -7,9 +7,10 @@ Este projeto é um sistema de **RAG (Retrieval-Augmented Generation)** de larga 
 O sistema é dividido em 4 etapas principais, localizadas na pasta `src/`:
 
 1.  **Download**: Captura automatizada de PDFs e metadados do portal da ANEEL.
-2.  **Parsing**: Conversão de PDFs/HTMLs para Markdown e geração de pedaços de texto (chunks).
-3.  **Embedding**: Vetorização dos textos usando IA (OpenAI) e armazenamento no **Qdrant Cloud**.
-4.  **Retrieval**: Motor de busca semântica para encontrar os trechos mais relevantes para qualquer pergunta.
+2.  **Parsing**: Extração do conteúdo dos PDFs/HTMLs e conversão para Markdown.
+3.  **Chunking**: Geração dos blocos de texto (chunks) a partir do Markdown dos arquivos.
+4.  **Embedding**: Vetorização dos textos usando o modelo de embedding da OpenAI e armazenamento no **Qdrant Cloud**.
+5.  **Retrieval**: Motor de busca semântica para encontrar os trechos mais relevantes para qualquer pergunta.
 
 ---
 
@@ -43,72 +44,49 @@ QDRANT_API_KEY=sua_chave_do_qdrant
 ```
 
 ### 3. Credenciais GCP
-Coloque o arquivo `chave.json` (Service Account do Google Cloud) na raiz do projeto para permitir o acesso ao Bucket de arquivos.
+Coloque o arquivo `chave.json` (Service Account do Google Cloud) na raiz do projeto para permitir o acesso ao Bucket de arquivos, chamado de `dados_bruto_nlp`.
 
 ---
 
 ## 🔌 Ordem de Execução (Passo a Passo)
 
 ### Passo 1: Download de Documentos
-Sincroniza os metadados dos arquivos JSON e inicia o download via Selenium.
+Sincroniza os metadados dos arquivos JSON e inicia o download dos arquivos.
 ```bash
 python src/download/pipeline.py
 ```
-*O sistema gerencia automaticamente a integridade dos PDFs e faz o upload para o GCP.*
 
-### Passo 2: Parsing e Chunking (GCP)
-Transforma os PDFs brutos em arquivos `.jsonl` com o texto limpo e dividido. Este passo geralmente é executado em uma VM para alta performance.
+### Passo 2: Parsing
+Transforma os PDFs/HTMLs brutos em arquivos `.jsonl` com o texto limpo no formato Markdown
 ```bash
 python src/parsing/pipeline.py
 ```
 
-### Passo 3: Geração de Embeddings
+### Passo 3: Chunking
+Transforma os PDFs brutos em arquivos `.jsonl` com o texto limpo e dividido.
+```bash
+python src/parsing/pipeline.py --workers 20
+```
+
+### Passo 4: Geração de Embeddings
 Esta é a etapa mais massiva. Ela lê os chunks do GCP, gera os vetores na OpenAI e salva no Qdrant Cloud.
 ```bash
 python src/embedding/pipeline.py --workers 10
 ```
-*Nota: O script possui um sistema de "cool-down" automático para não estourar o Rate Limit da OpenAI.*
 
-### Passo 4: Busca Semântica (Retrieval)
+### Passo 5: Busca Semântica (Retrieval)
 Agora você pode fazer perguntas ao seu banco de dados!
 ```bash
 python src/retrieval/retriever.py
 ```
 
----
-
-## 🖥️ Gerenciamento da VM (GCP)
-
-Se precisar rodar o processamento pesado na nuvem:
-
-```bash
-# Conectar na VM
-gcloud compute ssh nlp-parser --zone=southamerica-east1-a
-
-# Rodar processo em segundo plano (evita queda se a conexão cair)
-screen -S embedding
-python src/embedding/pipeline.py --workers 15
-# Pressione Ctrl+A+D para sair do screen sem matar o processo
-```
+*Nota: Em cada etapa o sistema gerencia automaticamente a integridade dos arquivos e faz o upload para o GCP, mantendo uma arquitetura medalhão dos dados.*
 
 ---
 
-## 📊 Comandos de Monitoramento
+## 🖥️ Execução na VM do Google Cloud (GCP)
 
-*   **Verificar progresso no SQLite**:
-    ```bash
-    sqlite3 controle_downloads.db "SELECT status, COUNT(*) FROM arquivos GROUP BY status;"
-    ```
-*   **Verificar dados no Qdrant**:
-    ```bash
-    python src/embedding/checar_qdrant.py
-    ```
+Todas as etapas anteriores podem ser executadas localmente na máquina do usuário, entretanto é recomendável usar a VM do Google para acelerar a execução e diminuir a latência da rede. Para executar o processamento pesado na nuvem, basta:
 
----
-
-## 📝 Legenda de Status (Banco de Dados)
-*   `0`: Pendente
-*   `3`: Download/Upload concluído
-*   `6`: Markdown gerado
-*   `8`: Pronto para Embedding
-*   `11`: Processo completo (Indexado no Qdrant)
+1. iniciar uma instância da VM no Google na mesma região do bucket.
+2. Executar todos os passos anteriores no Google Cloud Shell da VM.
