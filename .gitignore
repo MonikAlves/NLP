@@ -1,6 +1,7 @@
 src/*/__pycache__/
 *.db
 *.json
+!vercel.json
 /venv
 /.venv
 /temp_pdfs
