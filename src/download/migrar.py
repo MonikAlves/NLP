@@ -59,7 +59,7 @@ def migrar(json_file):
                         INSERT OR IGNORE INTO arquivos (
                             data_registro, titulo, url, nome_arquivo, status,
                             ano, numeracao_item, autor, material, esfera,
-                            situacao, data_assinatura, data_publicacao, assunto, ementa
+                            situacao, assinatura, publicacao, assunto, ementa
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (

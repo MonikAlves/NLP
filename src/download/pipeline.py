@@ -97,9 +97,9 @@ def run_worker(worker_id: int):
     asyncio.run(worker_loop(worker_id))
 
 if __name__ == "__main__":
-    migrar.migrar("resource/2016.json")
-    migrar.migrar("resource/2021.json")
-    migrar.migrar("resource/2022.json")
+    migrar("src/download/resource/2016.json")
+    migrar("src/download/resource/2021.json")
+    migrar("src/download/resource/2022.json")
 
     print("🚀 Iniciando Motor (PDF + HTML + ZIP) Multi-Processos...")
     try:
