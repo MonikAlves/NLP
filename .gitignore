@@ -6,3 +6,4 @@ src/*/__pycache__/
 /.venv
 /temp_pdfs
 .env
+.vercel
