@@ -87,12 +87,27 @@ def completion(pergunta: str, debug: bool = False) -> Dict[str, Any]:
             else:
                 resposta_final = f"Erro após {max_retries} tentativas: O modelo está indisponível no momento. Detalhe: {str(e)}"
 
-    # 5. Se debug for False, retorna apenas a resposta
-    if not debug:
-        return {"resposta": resposta_final}
+    # 5. Extrair fontes únicas (nome e URL) para o retorno principal
+    fontes_utilizadas = []
+    seen_files = set()
+    for c in contextos:
+        if isinstance(c, dict):
+            file_name = c.get("file")
+            if file_name and file_name not in seen_files:
+                fontes_utilizadas.append({
+                    "nome": file_name,
+                    "url": c.get("url", "N/A")
+                })
+                seen_files.add(file_name)
 
-    # 6. Se debug for True, monta o retorno detalhado
-    # Usamos o query_vector que já veio da busca para o preview
+    # 6. Se debug for False, retorna a resposta com as fontes
+    if not debug:
+        return {
+            "resposta": resposta_final,
+            "fontes": fontes_utilizadas
+        }
+
+    # 7. Se debug for True, monta o retorno detalhado (mantendo o que já existia)
     embedding_preview = query_vector_full[:7]
 
     # Formata os documentos do retriever conforme solicitado
