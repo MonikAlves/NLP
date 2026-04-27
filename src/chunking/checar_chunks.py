@@ -16,19 +16,15 @@ def checar_chunks():
     count = 0
     anos = set()
 
-    # O list_blobs traz um iterador. Cada blob tem o caminho completo.
-    # Ex: aneel/chunks/2016/nome_do_arquivo.jsonl
     for blob in bucket.list_blobs(prefix="aneel/chunks/"):
         if blob.name.endswith(".jsonl"):
             count += 1
             
-            # Vamos pegar o ano a partir da estrutura de pastas
             partes = blob.name.split("/")
             if len(partes) > 3:
                 ano = partes[-2]
                 anos.add(ano)
 
-            # Um log a cada 5000 arquivos para não parecer que travou
             if count % 5000 == 0:
                 logger.info(f"Já contei {count} arquivos...")
 
