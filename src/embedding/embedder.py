@@ -14,8 +14,8 @@ class Embedder:
         self.model = model
 
     @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(8), # Aumentado para 8 tentativas
+        wait=wait_exponential(multiplier=2, min=5, max=60), # Espera mais agressiva (até 60s)
         reraise=True
     )
     def get_embeddings(self, texts: list[str]) -> list[list[float]]:
