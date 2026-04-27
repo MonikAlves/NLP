@@ -90,3 +90,17 @@ Todas as etapas anteriores podem ser executadas localmente na máquina do usuár
 
 1. iniciar uma instância da VM no Google na mesma região do bucket.
 2. Executar todos os passos anteriores no Google Cloud Shell da VM.
+
+## 📱 Aplicação
+
+Para executar o front-end da aplicação, primeiro instalamos as dependências do `node.js`:
+
+```bash
+npm install
+```
+
+E para executar basta rodar:
+
+```bash
+npm run dev
+```
