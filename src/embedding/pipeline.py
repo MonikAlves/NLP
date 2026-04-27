@@ -165,29 +165,39 @@ def main():
     sucessos = 0
     erros = 0
     total_geral = len(arquivos_pendentes)
-    batch_size_cooldown = 500 # Pausa a cada 500 arquivos
+    
+    # Configurações de Escalonamento
+    MICRO_BATCH = 50       # Pausa curta a cada 50
+    COOLDOWN_BATCH = 500   # Pausa longa a cada 500
+    
+    import time
 
-    for i in range(0, total_geral, batch_size_cooldown):
-        batch_atual = arquivos_pendentes[i : i + batch_size_cooldown]
-        total_batch = len(batch_atual)
+    for i in range(0, total_geral, COOLDOWN_BATCH):
+        bloco_500 = arquivos_pendentes[i : i + COOLDOWN_BATCH]
         
-        logger.info(f"📦 Processando bloco de {i+1} até {min(i + batch_size_cooldown, total_geral)}...")
+        logger.info(f"📦 Iniciando Grande Bloco: {i+1} até {min(i + COOLDOWN_BATCH, total_geral)}")
 
-        with ThreadPoolExecutor(max_workers=args.workers) as executor:
-            future_to_arq = {executor.submit(process_single_file, arq, embedder, vector_db): arq for arq in batch_atual}
+        # Processa o bloco de 500 em sub-lotes de 50
+        for j in range(0, len(bloco_500), MICRO_BATCH):
+            sub_lote = bloco_500[j : j + MICRO_BATCH]
             
-            for idx, future in enumerate(as_completed(future_to_arq), 1):
-                if future.result():
-                    sucessos += 1
-                else:
-                    erros += 1
-                
-                if idx % 50 == 0 or idx == total_batch:
-                    logger.info(f"🚀 Progresso do Bloco: {idx}/{total_batch} | Geral: {i + idx}/{total_geral}")
+            with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                futures = {executor.submit(process_single_file, arq, embedder, vector_db): arq for arq in sub_lote}
+                for future in as_completed(futures):
+                    if future.result():
+                        sucessos += 1
+                    else:
+                        erros += 1
+            
+            logger.info(f"🚀 Sub-lote concluído ({j + len(sub_lote)}/{len(bloco_500)}) | Total: {sucessos + erros}/{total_geral}")
+            
+            # Micro-pausa de 5s entre sub-lotes
+            if j + MICRO_BATCH < len(bloco_500):
+                time.sleep(5)
 
-        if i + batch_size_cooldown < total_geral:
-            logger.warning(f"⏳ Bloco concluído. Pausando por 60s para resetar o Rate Limit da OpenAI...")
-            import time
+        # Pausa longa de 60s entre blocos de 500
+        if i + COOLDOWN_BATCH < total_geral:
+            logger.warning(f"⏳ Bloco de 500 concluído. Pausando por 60s para resetar limites...")
             time.sleep(60)
 
     logger.success(f"🏁 Pipeline finalizado! Sucessos: {sucessos}, Erros: {erros}")
