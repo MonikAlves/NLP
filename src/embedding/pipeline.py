@@ -164,19 +164,31 @@ def main():
 
     sucessos = 0
     erros = 0
-    total = len(arquivos_pendentes)
+    total_geral = len(arquivos_pendentes)
+    batch_size_cooldown = 500 # Pausa a cada 500 arquivos
 
-    with ThreadPoolExecutor(max_workers=args.workers) as executor:
-        future_to_arq = {executor.submit(process_single_file, arq, embedder, vector_db): arq for arq in arquivos_pendentes}
+    for i in range(0, total_geral, batch_size_cooldown):
+        batch_atual = arquivos_pendentes[i : i + batch_size_cooldown]
+        total_batch = len(batch_atual)
         
-        for idx, future in enumerate(as_completed(future_to_arq), 1):
-            if future.result():
-                sucessos += 1
-            else:
-                erros += 1
+        logger.info(f"📦 Processando bloco de {i+1} até {min(i + batch_size_cooldown, total_geral)}...")
+
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            future_to_arq = {executor.submit(process_single_file, arq, embedder, vector_db): arq for arq in batch_atual}
             
-            if idx % 10 == 0 or idx == total:
-                logger.info(f"🚀 Progresso: {idx}/{total} (Sucesso: {sucessos} | Erros: {erros})")
+            for idx, future in enumerate(as_completed(future_to_arq), 1):
+                if future.result():
+                    sucessos += 1
+                else:
+                    erros += 1
+                
+                if idx % 50 == 0 or idx == total_batch:
+                    logger.info(f"🚀 Progresso do Bloco: {idx}/{total_batch} | Geral: {i + idx}/{total_geral}")
+
+        if i + batch_size_cooldown < total_geral:
+            logger.warning(f"⏳ Bloco concluído. Pausando por 60s para resetar o Rate Limit da OpenAI...")
+            import time
+            time.sleep(60)
 
     logger.success(f"🏁 Pipeline finalizado! Sucessos: {sucessos}, Erros: {erros}")
 
