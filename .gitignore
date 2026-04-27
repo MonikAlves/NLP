@@ -1,5 +1,6 @@
 *.db
 *.json
+!src/download/resource/*.json
 /venv
 /.venv
 /temp_pdfs
