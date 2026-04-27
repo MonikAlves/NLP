@@ -9,6 +9,7 @@ from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 from google.cloud import storage
 import datetime
+import json
 
 # Ajuste de path para chegar na RAIZ do projeto (NLP/)
 # Como estamos em src/backend/retrieval/, precisamos subir 3 níveis para chegar em src/
@@ -72,18 +73,32 @@ class Retriever:
         
         # Inicializa cliente GCS
         self.bucket_name = "dados_bruto_nlp"
-        credentials_path = os.path.join(root_path, "chave.json")
         
-        if not os.path.exists(credentials_path):
-            logger.error(f"❌ Arquivo de credenciais NÃO ENCONTRADO em: {credentials_path}")
-            self.storage_client = None
-        else:
+        # 1. Tenta carregar das variáveis de ambiente (Vercel/Produção)
+        env_credentials = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+        
+        if env_credentials:
             try:
-                self.storage_client = storage.Client.from_service_account_json(credentials_path)
+                info = json.loads(env_credentials)
+                self.storage_client = storage.Client.from_service_account_info(info)
                 self.bucket = self.storage_client.bucket(self.bucket_name)
-                logger.success("✅ Conectado ao Google Cloud Storage com sucesso!")
+                logger.success("✅ GCS conectado via Variável de Ambiente!")
             except Exception as e:
-                logger.error(f"❌ Erro ao inicializar GCS com chave.json: {e}")
+                logger.error(f"❌ Erro ao ler GCP_SERVICE_ACCOUNT_JSON: {e}")
+                self.storage_client = None
+        else:
+            # 2. Tenta carregar do arquivo local (Desenvolvimento)
+            credentials_path = os.path.join(root_path, "chave.json")
+            if os.path.exists(credentials_path):
+                try:
+                    self.storage_client = storage.Client.from_service_account_json(credentials_path)
+                    self.bucket = self.storage_client.bucket(self.bucket_name)
+                    logger.success("✅ GCS conectado via chave.json local!")
+                except Exception as e:
+                    logger.error(f"❌ Erro ao carregar chave.json: {e}")
+                    self.storage_client = None
+            else:
+                logger.warning("⚠️ Nenhuma credencial GCS encontrada (Variável ou Arquivo).")
                 self.storage_client = None
 
     def generate_signed_url(self, blob_name: str):
