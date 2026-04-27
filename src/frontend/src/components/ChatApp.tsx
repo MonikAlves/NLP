@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRag } from '../context/RagContext';
 import { useDesktop } from '../context/DesktopContext';
 
 const ChatApp = () => {
   const { 
     messages, isProcessing, setIsProcessing, setCurrentStep, 
-    setCurrentQuery, addMessage, setFoundDocs, apiResponse, setApiResponse, setDebugInfo 
+    setCurrentQuery, addMessage, apiResponse, setApiResponse, setDebugInfo 
   } = useRag();
   const { windows } = useDesktop();
   const [inputText, setInputText] = useState('');

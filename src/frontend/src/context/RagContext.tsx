@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export type RagStep = 'IDLE' | 'QUERY_DISPLAY' | 'EMBEDDING_GEN' | 'VECTOR_SEARCH' | 'DOCS_OPENED' | 'PROMPT_ASSEMBLY' | 'IA_RESPONSE';
 

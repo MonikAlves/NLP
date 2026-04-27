@@ -1,4 +1,3 @@
-import React from 'react';
 import { useRag } from '../context/RagContext';
 
 const PdfReaderApp = () => {

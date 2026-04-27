@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRag } from '../context/RagContext';
 import { useDesktop } from '../context/DesktopContext';
 
 const mockEmbeddings = "[0.0123, -0.5432, 0.9981, -0.1122, 0.3341, ...]";
-const mockDocs = `[DOC 1]: O React é uma biblioteca JavaScript declarativa, eficiente e flexível para criar interfaces de usuário.\n[DOC 2]: Permite compor UIs complexas a partir de pequenos e isolados pedaços de código chamados "componentes".`;
 
 const RagMonitorApp = () => {
   const { currentStep, advanceStep, currentQuery, debugInfo } = useRag();

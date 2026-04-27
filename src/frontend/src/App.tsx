@@ -1,6 +1,5 @@
-import React from 'react';
-import { RagProvider, useRag } from './context/RagContext';
-import { DesktopProvider, useDesktop } from './context/DesktopContext';
+import { RagProvider } from './context/RagContext';
+import { DesktopProvider } from './context/DesktopContext';
 import { Desktop } from './components/Desktop';
 import WindowWrapper from './components/WindowWrapper';
 import ChatApp from './components/ChatApp';

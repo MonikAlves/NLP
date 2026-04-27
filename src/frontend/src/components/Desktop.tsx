@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import Taskbar from './Taskbar';
 import { useDesktop } from '../context/DesktopContext';
 import chatIcon from '../assets/computer_with_programs_alpha.png';

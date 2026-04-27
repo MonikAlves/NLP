@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export interface WindowState {
   id: string;
@@ -37,7 +37,7 @@ const DesktopContext = createContext<DesktopContextType | undefined>(undefined);
 
 export const DesktopProvider = ({ children }: { children: ReactNode }) => {
   const [windows, setWindows] = useState<Record<string, WindowState>>(initialWindows);
-  const [maxZIndex, setMaxZIndex] = useState(10);
+  const [, setMaxZIndex] = useState(10);
 
   const focusWindow = (id: string) => {
     setMaxZIndex(prev => {
