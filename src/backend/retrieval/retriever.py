@@ -7,6 +7,8 @@ from qdrant_client.http import models
 from loguru import logger
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
+from google.cloud import storage
+import datetime
 
 # Ajuste de path para permitir importações internas se o script for rodado diretamente
 root_path = str(Path(__file__).parent.parent.parent)
@@ -62,6 +64,32 @@ class Retriever:
             api_key=os.getenv("QDRANT_API_KEY"),
             timeout=60  # Aumentado para 60 segundos
         )
+        
+        # Inicializa cliente GCS
+        self.bucket_name = "dados_bruto_nlp"
+        credentials_path = os.path.join(root_path, "chave.json")
+        try:
+            self.storage_client = storage.Client.from_service_account_json(credentials_path)
+            self.bucket = self.storage_client.bucket(self.bucket_name)
+        except Exception as e:
+            logger.error(f"Erro ao carregar chave.json do GCS: {e}")
+            self.storage_client = None
+
+    def generate_signed_url(self, blob_name: str):
+        """Gera uma URL assinada válida por 1 hora."""
+        if not self.storage_client or not blob_name:
+            return None
+        try:
+            blob = self.bucket.blob(blob_name)
+            url = blob.generate_signed_url(
+                version="v4",
+                expiration=datetime.timedelta(hours=1),
+                method="GET",
+            )
+            return url
+        except Exception as e:
+            logger.error(f"Erro ao gerar URL assinada para {blob_name}: {e}")
+            return None
 
     def search(self, query: str, limit: int = 5, year: str = None):
         """
@@ -111,11 +139,15 @@ class Retriever:
         # 4. Formata os resultados
         results = []
         for hit in response.points:
+            file_name = hit.payload.get("nome_arquivo")
+            signed_url = self.generate_signed_url(file_name)
+            
             results.append({
                 "id": hit.id,
                 "score": hit.score,
                 "chunk": hit.payload.get("texto"),
-                "file": hit.payload.get("nome_arquivo"),
+                "file": file_name,
+                "url": signed_url,
                 "year": hit.payload.get("ano")
             })
 

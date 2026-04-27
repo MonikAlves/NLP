@@ -103,6 +103,7 @@ def completion(pergunta: str, debug: bool = False) -> Dict[str, Any]:
                 "id": c.get("id", "N/A"),
                 "name": c.get("file", "N/A"),
                 "score": round(c.get("score", 0), 4),
+                "url": c.get("url", "N/A"),
                 "chunk": c.get("chunk", "")
             })
         except (AttributeError, TypeError):
