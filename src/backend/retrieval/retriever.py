@@ -10,8 +10,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from google.cloud import storage
 import datetime
 
-# Ajuste de path para permitir importações internas se o script for rodado diretamente
-root_path = str(Path(__file__).parent.parent.parent)
+# Ajuste de path para chegar na RAIZ do projeto (NLP/)
+# Como estamos em src/backend/retrieval/, precisamos subir 3 níveis para chegar em src/
+# E 4 níveis para chegar na raiz onde está o .env e o chave.json
+file_path = Path(__file__).resolve()
+project_root = file_path.parent.parent.parent.parent 
+root_path = str(project_root)
+
 if root_path not in sys.path:
     sys.path.append(root_path)
 
@@ -68,12 +73,18 @@ class Retriever:
         # Inicializa cliente GCS
         self.bucket_name = "dados_bruto_nlp"
         credentials_path = os.path.join(root_path, "chave.json")
-        try:
-            self.storage_client = storage.Client.from_service_account_json(credentials_path)
-            self.bucket = self.storage_client.bucket(self.bucket_name)
-        except Exception as e:
-            logger.error(f"Erro ao carregar chave.json do GCS: {e}")
+        
+        if not os.path.exists(credentials_path):
+            logger.error(f"❌ Arquivo de credenciais NÃO ENCONTRADO em: {credentials_path}")
             self.storage_client = None
+        else:
+            try:
+                self.storage_client = storage.Client.from_service_account_json(credentials_path)
+                self.bucket = self.storage_client.bucket(self.bucket_name)
+                logger.success("✅ Conectado ao Google Cloud Storage com sucesso!")
+            except Exception as e:
+                logger.error(f"❌ Erro ao inicializar GCS com chave.json: {e}")
+                self.storage_client = None
 
     def generate_signed_url(self, blob_name: str):
         """Gera uma URL assinada válida por 1 hora."""
