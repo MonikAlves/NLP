@@ -1,9 +1,7 @@
-# Separadores em ordem de prioridade (do mais estrutural ao mais granular)
-# Inclui headers Markdown gerados pelo pymupdf4llm + artigos ANEEL
 SEPARATORS = ["\n## ", "\n### ", "\n#### ", "\nArt.", "\n\n", "\n", ". ", " ", ""]
 
-CHUNK_SIZE = 4000   # ~1000 tokens em português (~4 chars/token)
-OVERLAP = 400       # ~100 tokens de sobreposição entre chunks
+CHUNK_SIZE = 4000
+OVERLAP = 400
 
 
 def chunk_pages(enriched_pages: list[dict]) -> list[dict]:
@@ -42,7 +40,6 @@ def _recursive_split(text: str, size: int, overlap: int, separators: list[str]) 
         if sep and sep in text:
             return _split_and_merge(text, sep, size, overlap, separators)
 
-    # Último recurso: corte por tamanho sem quebrar palavras
     return _split_by_size(text, size, overlap)
 
 
@@ -61,7 +58,6 @@ def _split_and_merge(
         candidate = (current + sep + part) if current else part
         if len(candidate) > size and current:
             merged.append(current)
-            # Overlap: pega o final do chunk anterior como início do próximo
             tail = current[-overlap:] if overlap else ""
             current = (tail + sep + part) if tail else part
         else:
@@ -70,7 +66,6 @@ def _split_and_merge(
     if current:
         merged.append(current)
 
-    # Subdivide recursivamente qualquer parte ainda grande
     result = []
     remaining_seps = separators[separators.index(sep) + 1:] if sep in separators else separators[1:]
     for chunk in merged:
@@ -96,7 +91,6 @@ def _split_by_size(text: str, size: int, overlap: int) -> list[str]:
     while start < len(text):
         end = min(start + size, len(text))
 
-        # Evita cortar no meio de palavra
         if end < len(text) and text[end] not in (" ", "\n"):
             space = text.rfind(" ", start, end)
             if space > start:

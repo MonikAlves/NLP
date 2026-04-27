@@ -8,7 +8,6 @@ DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
 def criar_tabela_chunks():
     conn = sqlite3.connect(DB_NAME)
 
-    # Adiciona colunas faltantes na tabela arquivos (se não existirem)
     colunas_novas = [
         ("ementa", "TEXT"),
         ("assunto", "TEXT"),
@@ -24,9 +23,8 @@ def criar_tabela_chunks():
             conn.execute(f"ALTER TABLE arquivos ADD COLUMN {col} {tipo}")
             print(f"  ✅ Coluna '{col}' adicionada à tabela arquivos.")
         except Exception:
-            pass  # já existe
+            pass
 
-    # Cria tabela de chunks
     conn.execute("""
         CREATE TABLE IF NOT EXISTS chunks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

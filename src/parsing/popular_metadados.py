@@ -6,7 +6,6 @@ import sys
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
 
-# Aceita caminho do JSON como argumento; padrão = dado.json na raiz
 JSON_PATH = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT_DIR, "dado.json")
 
 
