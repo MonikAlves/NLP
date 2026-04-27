@@ -60,6 +60,7 @@ class Retriever:
         self.client = QdrantClient(
             url=os.getenv("QDRANT_URL"),
             api_key=os.getenv("QDRANT_API_KEY"),
+            timeout=60  # Aumentado para 60 segundos
         )
 
     def search(self, query: str, limit: int = 5, year: str = None):
@@ -83,14 +84,29 @@ class Retriever:
                 ]
             )
 
-        # 3. Busca no Qdrant
-        response = self.client.query_points(
-            collection_name=self.collection_name,
-            query=query_vector,
-            query_filter=query_filter,
-            limit=limit,
-            with_payload=True
-        )
+        # 3. Busca no Qdrant com Retry manual
+        max_retries = 3
+        response = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = self.client.query_points(
+                    collection_name=self.collection_name,
+                    query=query_vector,
+                    query_filter=query_filter,
+                    limit=limit,
+                    with_payload=True
+                )
+                break # Sucesso
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"⚠️ Tentativa {attempt + 1} de busca falhou. Tentando novamente...")
+                    import time
+                    time.sleep(1)
+                    continue
+                else:
+                    logger.error(f"❌ Erro definitivo na busca: {e}")
+                    raise e
 
         # 4. Formata os resultados
         results = []
