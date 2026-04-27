@@ -17,7 +17,6 @@ def generate_chunks(text: str, metadata: dict, chunk_size: int = 3000, chunk_ove
     
     results = []
     for i, doc in enumerate(chunks):
-        # Cada doc da langchain tem page_content
         chunk_dict = {
             "chunk_index": i,
             "texto": doc.page_content,

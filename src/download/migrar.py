@@ -13,18 +13,14 @@ def limpar_campo(valor):
     return valor.strip()
 
 def migrar(json_file):
-    # 1. Carregar o arquivo JSON (aceita caminho via argumento ou usa dado.json)
     json_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT_DIR, json_file)
     print(f"📂 Lendo {json_path}...")
     with open(json_path, 'r', encoding='utf-8') as f:
         dados = json.load(f)
 
-    # 2. Conectar ao SQLite (vai criar o arquivo se não existir)
     conn = sqlite3.connect(os.path.join(ROOT_DIR, 'controle_downloads.db'))
     cursor = conn.cursor()
 
-    # 3. Criar a tabela com a estrutura otimizada
-    # status: 0=nada, 1=progresso, 2=erro, 3=baixado
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS arquivos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +46,6 @@ def migrar(json_file):
 
     registros_inseridos = 0
 
-    # 4. Iterar sobre o JSON e inserir no banco
     for data, conteudo in dados.items():
         for registro in conteudo.get('registros', []):
             for pdf in registro.get('pdfs', []):

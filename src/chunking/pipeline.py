@@ -41,17 +41,13 @@ def update_db_status(arquivo_id: int, status: int, erro_log: str = None):
 @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10))
 def download_and_process(nome_arquivo: str, ano: str) -> list[dict]:
     """Baixa o arquivo do GCP e gera os chunks (com retentativa automática)."""
-    # Como o nome do arquivo pode vir com .pdf no BD, buscamos .md
     base_name = nome_arquivo.rsplit('.', 1)[0]
     md_filename = f"{base_name}.md"
     
-    # Em exportar_markdowns.py, vimos que o path é aneel/markdowns/{ano}/{base_name}.md
-    # Mas como o usuário não especificou o path exato e havia markdowns soltos antes, vamos tentar dois paths
     blob_path = f"aneel/markdowns/{ano}/{md_filename}"
     blob = bucket.blob(blob_path)
     
     if not blob.exists():
-        # Fallback para o path antigo sem ano, se existir
         blob_path = f"aneel/markdowns/{md_filename}"
         blob = bucket.blob(blob_path)
         if not blob.exists():
@@ -60,7 +56,6 @@ def download_and_process(nome_arquivo: str, ano: str) -> list[dict]:
     content = blob.download_as_string().decode("utf-8")
     metadata, clean_text = extract_metadata_and_text(content)
     
-    # Fallback de metadados
     if "nome_arquivo" not in metadata:
         metadata["nome_arquivo"] = nome_arquivo
     if "ano" not in metadata and ano:
@@ -73,7 +68,6 @@ def upload_chunks(ano: str, nome_arquivo: str, chunks: list[dict]):
     """Faz upload da lista de chunks como um arquivo .jsonl isolado no GCP (com retentativa automática)."""
     base_name = nome_arquivo.rsplit('.', 1)[0]
     
-    # Trata caso 'ano' venha vazio do BD
     ano_folder = ano if ano else "sem_ano"
     upload_path = f"aneel/chunks/{ano_folder}/{base_name}.jsonl"
     
@@ -88,18 +82,14 @@ def process_single_file(arquivo) -> bool:
     """Orquestra o download, chunking e upload de um único arquivo."""
     arquivo_id, nome_arquivo, ano = arquivo
     
-    # 1. Marca como "em processamento"
     update_db_status(arquivo_id, STATUS_CHUNKEANDO)
     
     try:
-        # 2. Download e Chunking
         chunks = download_and_process(nome_arquivo, ano)
         
-        # 3. Upload direto pro GCP (1 .jsonl para este .md)
         if chunks:
             upload_chunks(ano, nome_arquivo, chunks)
         
-        # 4. Sucesso! Marca no BD
         update_db_status(arquivo_id, STATUS_CHUNKS_OK)
         return True
         
@@ -116,7 +106,6 @@ def main():
 
     logger.info("Iniciando pipeline de Chunking...")
     
-    # 1. Consulta no banco quais arquivos estão prontos para chunking (status=6)
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT id, nome_arquivo, ano FROM arquivos WHERE status = ?", (STATUS_PARSEADO,))
@@ -132,7 +121,6 @@ def main():
         logger.info(f"Limitando para processar apenas os {args.limit} primeiros arquivos.")
         arquivos_pendentes = arquivos_pendentes[:args.limit]
         
-    # 2. Processamento em paralelo
     sucessos = 0
     erros = 0
     total = len(arquivos_pendentes)

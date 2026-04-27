@@ -61,7 +61,6 @@ def _extract_pdf(pdf_bytes: bytes, nome_arquivo: str) -> list[dict]:
 
 def _extract_html(html_bytes: bytes, nome_arquivo: str) -> list[dict]:
     try:
-        # Tenta decodificar (muitos arquivos ANEEL usam latin-1 ou utf-8)
         try:
             content = html_bytes.decode('utf-8')
         except:
@@ -69,7 +68,6 @@ def _extract_html(html_bytes: bytes, nome_arquivo: str) -> list[dict]:
             
         soup = BeautifulSoup(content, 'lxml')
         
-        # Remove scripts e estilos
         for script in soup(["script", "style"]):
             script.extract()
             
@@ -85,7 +83,6 @@ def _extract_excel(excel_bytes: bytes, nome_arquivo: str) -> list[dict]:
         pages = []
         for sheet_name, df in df_dict.items():
             if df.empty: continue
-            # Converte tabela para Markdown
             md_table = df.to_markdown(index=False)
             pages.append({
                 "pagina": sheet_name, 

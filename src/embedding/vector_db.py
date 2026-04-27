@@ -6,7 +6,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from loguru import logger
 
-# Carrega variáveis do .env
 load_dotenv()
 
 class VectorDB:
@@ -15,7 +14,7 @@ class VectorDB:
         self.client = QdrantClient(
             url=os.getenv("QDRANT_URL"),
             api_key=os.getenv("QDRANT_API_KEY"),
-            timeout=60, # Aumentado para 60 segundos
+            timeout=60,
         )
 
     def ensure_collection(self, vector_size=1536):

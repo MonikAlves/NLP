@@ -19,17 +19,15 @@ def sincronizar():
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
 
-    # Coleta todos os nomes de arquivo que existem no GCP
     arquivos_no_gcp = set()
     for prefixo in PREFIXOS:
         for blob in bucket.list_blobs(prefix=prefixo):
-            nome = blob.name.split("/")[-1]  # pega só o nome do arquivo
+            nome = blob.name.split("/")[-1]
             if nome:
                 arquivos_no_gcp.add(nome)
 
     logger.info(f"☁️  {len(arquivos_no_gcp)} arquivos encontrados no GCP.")
 
-    # Atualiza o banco
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 

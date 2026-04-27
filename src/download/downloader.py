@@ -6,7 +6,6 @@ from loguru import logger
 from typing import Optional, Tuple
 
 
-# --- 2. CLASSE DE DOWNLOAD ---
 class Downloader:
     def __init__(self):
         self._session: Optional[AsyncSession] = None
@@ -29,7 +28,6 @@ class Downloader:
                 self._session = None
 
     async def download_file(self, url: str) -> Tuple[str, Optional[bytes], Optional[str]]:
-        # Limpeza de URL (Removendo espaços e garantindo https)
         url = re.sub(r"^(.*?)(https?://)", r"\2", url.strip())
         url = url.strip().replace("http://", "https://")
         
@@ -38,7 +36,6 @@ class Downloader:
         for attempt in range(3):
             try:
                 session = await self.get_session()
-                # Aumentei o timeout para 60 para aguentar HTMLs maiores ou ZIPs
                 resp = await session.get(url, timeout=60, allow_redirects=True)
                 
                 if resp.status_code == 200:

@@ -15,13 +15,11 @@ def sincronizar():
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
 
-    # Coleta arquivos do GCP (nome base e ano)
     gcp_files = []
     for blob in bucket.list_blobs(prefix="aneel/markdowns/"):
         if blob.name.endswith(".md"):
             partes = blob.name.split("/")
             nome = partes[-1].replace(".md", ".pdf")
-            # Extrair ano do caminho se existir ex: aneel/markdowns/2016/arquivo.md
             ano = partes[-2] if len(partes) > 3 else ""
             gcp_files.append((nome, ano))
 
@@ -31,11 +29,9 @@ def sincronizar():
         logger.warning("Nenhum markdown encontrado.")
         return
 
-    # Conecta no banco
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    # Busca todos os arquivos que já existem no banco
     cursor.execute("SELECT nome_arquivo FROM arquivos")
     arquivos_db = {row[0] for row in cursor.fetchall()}
 
@@ -46,11 +42,9 @@ def sincronizar():
     
     for nome, ano in gcp_files:
         if nome in arquivos_db:
-            # Já existe, vamos garantir que o status seja 6 (se for menor que 6)
             cursor.execute("UPDATE arquivos SET status = 6 WHERE nome_arquivo = ? AND status < 6", (nome,))
             marcados_update += cursor.rowcount
         else:
-            # Não existe! Vamos forçar a injeção no banco para não dependermos do banco original
             cursor.execute(
                 "INSERT INTO arquivos (nome_arquivo, ano, status) VALUES (?, ?, 6)",
                 (nome, ano)

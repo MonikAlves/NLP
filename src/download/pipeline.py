@@ -11,7 +11,6 @@ from google.cloud import storage
 from migrar import migrar
 from downloader import Downloader
 
-# --- 1. CONFIGURAÇÕES ---
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "chave.json")
 DB_NAME = os.path.join(ROOT_DIR, "controle_downloads.db")
@@ -19,7 +18,6 @@ BUCKET_NAME = "dados_bruto_nlp"
 MAX_WORKERS = 15
 
 
-# --- 3. FUNÇÕES DO WORKER ---
 def get_next_task(conn) -> Optional[Tuple]:
     cursor = conn.cursor()
     while True:
@@ -53,7 +51,6 @@ async def worker_loop(worker_id: int):
             rowid, url, filename = task
             cursor = conn.cursor()
 
-            # Determina o Content-Type para o Google Cloud Storage
             if filename.lower().endswith(('.html', '.htm')):
                 c_type = "text/html"
                 folder = "aneel/htmls"
@@ -66,15 +63,12 @@ async def worker_loop(worker_id: int):
 
             logger.info(f"📥 Worker {worker_id}: Baixando {filename}...")
             
-            # --- DOWNLOAD ---
             _, content, erro_log = await downloader.download_file(url)
 
-            # --- UPLOAD ---
             if content:
                 try:
                     blob_name = f"{folder}/{filename}"
                     blob = bucket.blob(blob_name)
-                    # Upload usando o content_type correto definido acima
                     blob.upload_from_string(content, content_type=c_type)
                     
                     cursor.execute("UPDATE arquivos SET status = 3, erro_log = NULL WHERE rowid = ?", (rowid,))
