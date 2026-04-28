@@ -42,7 +42,7 @@ const RagContext = createContext<RagContextType | undefined>(undefined);
 export const mockDocsData: Document[] = [
   { id: '1', filename: 'doc_react.txt', content: 'O React é uma biblioteca JavaScript declarativa, eficiente e flexível para criar interfaces de usuário. Ele permite compor UIs complexas a partir de pequenos e isolados pedaços de código chamados "componentes".' },
   { id: '2', filename: 'doc_hooks.txt', content: 'Hooks são uma nova adição ao React 16.8. Eles permitem que você use o state e outros recursos do React sem escrever uma classe.' },
-  { id: '3', filename: 'doc_aneel.txt', content: 'Despacho nº 3.386/2016 da ANEEL. Este documento trata de decisões regulatórias.\n\nLink para o documento original:\nhttp://www2.aneel.gov.br/cedoc/ndsp20163386.pdf', pdfUrl: 'http://www2.aneel.gov.br/cedoc/ndsp20163386.pdf' }
+  { id: '3', filename: 'doc_aneel.txt', content: 'Despacho nº 3.386/2016 da ANEEL. Este documento trata de decisões regulatórias.\n\nLink para o documento original:\nhttps://www2.aneel.gov.br/cedoc/ndsp20163386.pdf', pdfUrl: 'https://www2.aneel.gov.br/cedoc/ndsp20163386.pdf' }
 ];
 
 export const RagProvider = ({ children }: { children: ReactNode }) => {

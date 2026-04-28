@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDesktop } from '../context/DesktopContext';
 import chatIcon from '../assets/computer_with_programs_alpha.png';
 import ragIcon from '../assets/files_from_computer_alpha.png';
 import explorerIcon from '../assets/folder_hi-res_alpha.png';
-import notepadIcon from '../assets/Notepad.png';
+import notepadIcon from '../assets/notepad.png';
 import startIcon from '../assets/start.png';
 import pdfIcon from '../assets/web-documents_alpha.png';
 
@@ -17,9 +17,9 @@ const iconMap: Record<string, string> = {
 };
 
 const Clock = () => {
-  const [time, setTime] = React.useState(new Date());
+  const [time, setTime] = useState(new Date());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
