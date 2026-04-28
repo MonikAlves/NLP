@@ -14,7 +14,7 @@ const PdfReaderApp = () => {
       <div className="sunken-panel" style={{ flex: 1, background: '#fff', position: 'relative' }}>
         {pdfUrl ? (
           <iframe 
-            src={`https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`} 
+            src={pdfUrl} 
             style={{ width: '100%', height: '100%', border: 'none' }}
             title="PDF Reader"
           />

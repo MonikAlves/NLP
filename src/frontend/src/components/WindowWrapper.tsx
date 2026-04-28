@@ -12,8 +12,14 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
   const { windows, closeWindow, minimizeWindow, toggleMaximize, focusWindow, updatePosition, updateSize } = useDesktop();
   const windowState = windows[id];
 
-  const [localPos, setLocalPos] = useState({ x: 0, y: 0 });
-  const [localSize, setLocalSize] = useState({ width: parseInt(defaultWidth), height: parseInt(defaultHeight) });
+  const [localPos, setLocalPos] = useState({ 
+    x: window.innerWidth > 600 ? Math.max(20, (window.innerWidth - parseInt(defaultWidth)) / 2 + (Math.random() * 40 - 20)) : 5, 
+    y: window.innerWidth > 600 ? Math.max(20, (window.innerHeight - parseInt(defaultHeight)) / 2 + (Math.random() * 40 - 20)) : 5
+  });
+  const [localSize, setLocalSize] = useState({ 
+    width: Math.min(window.innerWidth - 10, parseInt(defaultWidth)), 
+    height: Math.min(window.innerHeight - 60, parseInt(defaultHeight)) 
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   

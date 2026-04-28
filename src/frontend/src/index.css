@@ -160,3 +160,54 @@ body {
 .notepad-link:hover {
   color: #551a8b !important;
 }
+
+/* RESPONSIVIDADE (MOBILE/TABLET) */
+
+@media (max-width: 800px) {
+  .taskbar-item {
+    min-width: 80px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 500px) {
+  body {
+    overflow: auto; /* Permite rolar o desktop no celular se necessário */
+  }
+
+  .desktop {
+    padding: 10px;
+    gap: 15px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: calc(100vh - 30px);
+  }
+
+  /* Força janelas a não estourarem a largura no mobile */
+  .window {
+    max-width: 98vw !important;
+  }
+
+  .taskbar-item {
+    min-width: 50px;
+    font-size: 10px;
+    padding: 0 2px;
+  }
+
+  .taskbar-item span {
+    max-width: 45px;
+  }
+
+  .start-button {
+    padding: 0 4px;
+  }
+
+  .start-button img {
+    margin-right: 0;
+  }
+
+  /* Ajuste de mensagens no chat para telas estreitas */
+  .message {
+    max-width: 90%;
+  }
+}
