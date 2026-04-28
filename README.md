@@ -93,14 +93,31 @@ Todas as etapas anteriores podem ser executadas localmente na máquina do usuár
 
 ## 📱 Aplicação
 
-Para executar o front-end da aplicação, primeiro instalamos as dependências do `node.js`:
+O sistema possui uma interface web para interação.
+
+### Backend (API)
+
+Para rodar o servidor backend, certifique-se de que o `.env` está configurado corretamente e o arquivo `chave.json` está na raiz.
 
 ```bash
+cd src/backend
+pip install -r requirements.txt
+python main.py
+```
+
+O servidor estará disponível em `http://localhost:8000`. Você pode acessar a documentação interativa (Swagger) em `http://localhost:8000/docs`.
+
+### Frontend
+
+Para executar o front-end da aplicação, primeiro instalamos as dependências:
+
+```bash
+cd src/frontend
 npm install
 ```
 
-E para executar basta rodar:
+E para executar em modo de desenvolvimento:
 
 ```bash
 npm run dev
-```
+```
