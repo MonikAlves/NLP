@@ -79,7 +79,7 @@ export const RagProvider = ({ children }: { children: ReactNode }) => {
             id: d?.id || Math.random().toString(),
             filename: `${d?.name || 'documento'} (${String(d?.id || '').substring(0, 8)})`,
             content: d?.chunk || '',
-            pdfUrl: d?.name ? `http://www2.aneel.gov.br/cedoc/${d.name}` : null
+            pdfUrl: d?.name ? `https://www2.aneel.gov.br/cedoc/${d.name}` : null
           }));
           setFoundDocs(mappedDocs);
         } else if (foundDocs.length === 0) {
