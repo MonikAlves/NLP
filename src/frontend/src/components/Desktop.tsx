@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import Taskbar from './Taskbar';
 import { useDesktop } from '../context/DesktopContext';
 import chatIcon from '../assets/computer_with_programs_alpha.png';
@@ -17,10 +17,23 @@ const iconMap: Record<string, string> = {
 
 export const Desktop = ({ children }: { children: ReactNode }) => {
   const { windows, openWindow, focusWindow } = useDesktop();
+  const lastTapRef = useRef<Record<string, number>>({});
 
   const handleDoubleClick = (id: string) => {
     openWindow(id);
     focusWindow(id);
+  };
+
+  const handleTouchStart = (id: string) => {
+    const now = Date.now();
+    const lastTap = lastTapRef.current[id] || 0;
+    const timespan = now - lastTap;
+    
+    if (timespan < 300 && timespan > 0) {
+      handleDoubleClick(id);
+    }
+    
+    lastTapRef.current[id] = now;
   };
 
   return (
@@ -32,11 +45,13 @@ export const Desktop = ({ children }: { children: ReactNode }) => {
             key={w.id} 
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '100px', textAlign: 'center', color: '#fff' }}
             onDoubleClick={() => handleDoubleClick(w.id)}
+            onTouchStart={() => handleTouchStart(w.id)}
           >
             <img 
               src={iconMap[w.id]} 
               alt={w.title} 
               style={{ width: '64px', height: '64px', marginBottom: '8px', imageRendering: 'pixelated' }} 
+              draggable={false}
             />
             <span style={{ fontSize: '14px', textShadow: '1px 1px 0 #000', fontWeight: 'bold' }}>{w.title}</span>
           </div>

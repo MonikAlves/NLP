@@ -7,16 +7,18 @@ const mockEmbeddings = "[0.0123, -0.5432, 0.9981, -0.1122, 0.3341, ...]";
 const RagMonitorApp = () => {
   const { currentStep, advanceStep, currentQuery, debugInfo } = useRag();
   const { openWindow, focusWindow } = useDesktop();
+  const lastStepRef = useRef<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
     
-    // Abre o Explorer automaticamente ao chegar no passo 4
-    if (currentStep === 'DOCS_OPENED') {
+    // Abre o Explorer automaticamente ao chegar no passo 4, apenas UMA vez
+    if (currentStep === 'DOCS_OPENED' && lastStepRef.current !== 'DOCS_OPENED') {
       openWindow('explorer');
       focusWindow('explorer');
     }
+    lastStepRef.current = currentStep;
   }, [currentStep, openWindow, focusWindow]);
 
   const embeddingPreview = Array.isArray(debugInfo?.embedding_da_pergunta?.embedding_preview)

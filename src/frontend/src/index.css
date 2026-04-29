@@ -42,6 +42,7 @@ body {
   align-items: center;
   gap: 20px;
   padding: 20px;
+  overflow: hidden; /* Garante que janelas saindo da tela sejam cortadas e não causem scroll */
 }
 
 .taskbar {
@@ -172,7 +173,7 @@ body {
 
 @media (max-width: 500px) {
   body {
-    overflow: auto; /* Permite rolar o desktop no celular se necessário */
+    overflow: hidden; /* Mantém o desktop fixo sem scroll lateral/vertical indesejado */
   }
 
   .desktop {
@@ -180,7 +181,7 @@ body {
     gap: 15px;
     align-items: flex-start;
     justify-content: flex-start;
-    min-height: calc(100vh - 30px);
+    height: calc(100vh - 30px);
   }
 
   /* Força janelas a não estourarem a largura no mobile */

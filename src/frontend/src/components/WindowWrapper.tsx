@@ -39,17 +39,25 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
   }, [windowState?.size]);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if ((isDragging && dragRef.current) || (isResizing && resizeRef.current)) {
+        // Previne scroll do browser durante arraste/redimensionamento no mobile
+        if (e.type === 'touchmove') e.preventDefault();
+      }
+
+      const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
+      const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+
       if (isDragging && dragRef.current) {
-        const dx = e.clientX - dragRef.current.startX;
-        const dy = e.clientY - dragRef.current.startY;
+        const dx = clientX - dragRef.current.startX;
+        const dy = clientY - dragRef.current.startY;
         setLocalPos({
           x: dragRef.current.initialX + dx,
           y: dragRef.current.initialY + dy,
         });
       } else if (isResizing && resizeRef.current) {
-        const dx = e.clientX - resizeRef.current.startX;
-        const dy = e.clientY - resizeRef.current.startY;
+        const dx = clientX - resizeRef.current.startX;
+        const dy = clientY - resizeRef.current.startY;
         
         const newWidth = Math.max(250, resizeRef.current.initialW + dx);
         const newHeight = Math.max(150, resizeRef.current.initialH + dy);
@@ -61,7 +69,7 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       if (isDragging && dragRef.current) {
         setIsDragging(false);
         updatePosition(id, localPos.x, localPos.y);
@@ -73,13 +81,17 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
     };
 
     if (isDragging || isResizing) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
     };
   }, [isDragging, isResizing, localPos, localSize, id, updatePosition, updateSize]);
 
@@ -87,29 +99,46 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
     return null;
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const startDragging = (clientX: number, clientY: number) => {
     focusWindow(id);
     if (windowState.isMaximized) return;
     setIsDragging(true);
     dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
+      startX: clientX,
+      startY: clientY,
       initialX: localPos.x,
       initialY: localPos.y,
     };
   };
 
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const startResizing = (clientX: number, clientY: number) => {
     focusWindow(id);
     if (windowState.isMaximized) return;
     setIsResizing(true);
     resizeRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
+      startX: clientX,
+      startY: clientY,
       initialW: localSize.width,
       initialH: localSize.height,
     };
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    startDragging(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startDragging(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    startResizing(e.clientX, e.clientY);
+  };
+
+  const handleResizeTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    startResizing(e.touches[0].clientX, e.touches[0].clientY);
   };
 
   const style: React.CSSProperties = windowState.isMaximized ? {
@@ -132,7 +161,8 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
     zIndex: windowState.zIndex,
     display: 'flex',
     flexDirection: 'column',
-    cursor: isDragging ? 'grabbing' : 'default'
+    cursor: isDragging ? 'grabbing' : 'default',
+    touchAction: 'none' // Importante para mobile não rolar a tela enquanto arrasta
   };
 
   return (
@@ -140,13 +170,17 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
       <div 
         className="title-bar" 
         onMouseDown={handleMouseDown} 
-        style={{ cursor: windowState.isMaximized ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
+        onTouchStart={handleTouchStart}
+        style={{ 
+          cursor: windowState.isMaximized ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+          touchAction: 'none' // Garante que o arraste no título não role a página
+        }}
       >
-        <div className="title-bar-text">{windowState.title}</div>
+        <div className="title-bar-text" style={{ pointerEvents: 'none' }}>{windowState.title}</div>
         <div className="title-bar-controls">
-          <button aria-label="Minimize" onClick={(e) => { e.stopPropagation(); minimizeWindow(id); }}></button>
-          <button aria-label="Maximize" onClick={(e) => { e.stopPropagation(); toggleMaximize(id); }}></button>
-          <button aria-label="Close" onClick={(e) => { e.stopPropagation(); closeWindow(id); }}></button>
+          <button aria-label="Minimize" onClick={(e) => { e.stopPropagation(); minimizeWindow(id); }} onTouchStart={(e) => e.stopPropagation()}></button>
+          <button aria-label="Maximize" onClick={(e) => { e.stopPropagation(); toggleMaximize(id); }} onTouchStart={(e) => e.stopPropagation()}></button>
+          <button aria-label="Close" onClick={(e) => { e.stopPropagation(); closeWindow(id); }} onTouchStart={(e) => e.stopPropagation()}></button>
         </div>
       </div>
       <div className="window-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '8px', overflow: 'hidden', position: 'relative' }}>
@@ -168,6 +202,7 @@ const WindowWrapper = ({ id, children, defaultWidth = '400px', defaultHeight = '
             imageRendering: 'pixelated'
           }} 
           onMouseDown={handleResizeMouseDown}
+          onTouchStart={handleResizeTouchStart}
         />
       )}
     </div>

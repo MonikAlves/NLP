@@ -53,10 +53,31 @@ export const DesktopProvider = ({ children }: { children: ReactNode }) => {
   const openWindow = (id: string) => {
     setMaxZIndex(prev => {
       const nextZ = prev + 1;
-      setWindows(prevWindows => ({
-        ...prevWindows,
-        [id]: { ...prevWindows[id], isOpen: true, isMinimized: false, zIndex: nextZ }
-      }));
+      setWindows(prevWindows => {
+        const win = prevWindows[id];
+        let newPos = win.position;
+        
+        // Se a janela estiver fora da tela ou não tiver posição, centraliza
+        const isOffscreen = !newPos || 
+                           newPos.x < -10 || 
+                           newPos.y < -10 || 
+                           newPos.x > window.innerWidth - 40 || 
+                           newPos.y > window.innerHeight - 40;
+
+        if (isOffscreen) {
+          const width = win.size?.width || 400;
+          const height = win.size?.height || 450;
+          newPos = {
+            x: Math.max(10, (window.innerWidth - width) / 2),
+            y: Math.max(10, (window.innerHeight - height) / 2)
+          };
+        }
+
+        return {
+          ...prevWindows,
+          [id]: { ...win, isOpen: true, isMinimized: false, zIndex: nextZ, position: newPos }
+        };
+      });
       return nextZ;
     });
   };
@@ -78,10 +99,31 @@ export const DesktopProvider = ({ children }: { children: ReactNode }) => {
   const restoreWindow = (id: string) => {
     setMaxZIndex(prev => {
       const nextZ = prev + 1;
-      setWindows(prevWindows => ({
-        ...prevWindows,
-        [id]: { ...prevWindows[id], isMinimized: false, zIndex: nextZ }
-      }));
+      setWindows(prevWindows => {
+        const win = prevWindows[id];
+        let newPos = win.position;
+        
+        // Valida posição ao restaurar também
+        const isOffscreen = !newPos || 
+                           newPos.x < -10 || 
+                           newPos.y < -10 || 
+                           newPos.x > window.innerWidth - 40 || 
+                           newPos.y > window.innerHeight - 40;
+
+        if (isOffscreen) {
+          const width = win.size?.width || 400;
+          const height = win.size?.height || 450;
+          newPos = {
+            x: Math.max(10, (window.innerWidth - width) / 2),
+            y: Math.max(10, (window.innerHeight - height) / 2)
+          };
+        }
+
+        return {
+          ...prevWindows,
+          [id]: { ...win, isMinimized: false, zIndex: nextZ, position: newPos }
+        };
+      });
       return nextZ;
     });
   };
